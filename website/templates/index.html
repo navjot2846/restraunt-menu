@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Corner Plate | Food Menu</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<main class="shell">
+    <header><div class="brand"><span></span>Corner Plate</div><div class="tag">Simple food, done properly</div></header>
+    <section class="hero"><h1>Pick your<br>perfect bite.</h1><p>Choose your favourites, set the quantity, and we will take care of the arithmetic. Freshly made and ready when you are.</p></section>
+
+    <form method="post" id="order-form">
+        <section class="menu-grid" aria-label="Food menu">
+            {% for item_id, item in menu.items() %}
+            <article class="food-card">
+                <div><div class="food-art"><div class="food-icon">{{ item.emoji }}</div><span class="food-number">{{ item.number }}</span></div><h2>{{ item.name }}</h2><p class="description">{{ item.description }}</p></div>
+                <div class="card-bottom"><span class="price">${{ '%.2f'|format(item.price) }}</span><div class="quantity"><button type="button" data-action="decrease" aria-label="Decrease {{ item.name }} quantity">−</button><input type="number" name="{{ item_id }}" value="{{ quantities[item_id] }}" min="0" max="99" aria-label="{{ item.name }} quantity"><button type="button" data-action="increase" aria-label="Increase {{ item.name }} quantity">+</button></div></div>
+            </article>
+            {% endfor %}
+        </section>
+
+        <section class="order-panel" aria-label="Order summary">
+            <div><h2>Your order</h2><p>Review your selection before generating your receipt. An 8% service tax is included in the final price.</p></div>
+            <div class="summary">
+                <div id="summary-items">{% if not lines %}<div class="empty">Your order is empty. Add a bite above.</div>{% endif %}{% for line in lines %}<div class="summary-row"><span>{{ line.quantity }} × {{ line.item.name }}</span><span>${{ '%.2f'|format(line.total) }}</span></div>{% endfor %}</div>
+                <div class="summary-row"><span>Subtotal</span><span id="subtotal">${{ '%.2f'|format(subtotal) }}</span></div><div class="summary-row"><span>Service tax (8%)</span><span id="tax">${{ '%.2f'|format(tax) }}</span></div><div class="summary-row total"><span>Final price</span><span id="total">${{ '%.2f'|format(total) }}</span></div>
+                <div class="checkout"><span id="item-count">{{ quantities.values()|sum }} item{% if quantities.values()|sum != 1 %}s{% endif %}</span><button type="submit">Generate receipt →</button></div>
+            </div>
+        </section>
+    </form>
+
+    {% if receipt %}<section class="receipt" id="receipt"><h2>Receipt</h2><div class="receipt-meta">Order {{ receipt.number }} · {{ receipt.date }}</div>{% for line in receipt.lines %}<div class="summary-row"><span>{{ line.quantity }} × {{ line.item.name }}</span><span>${{ '%.2f'|format(line.total) }}</span></div>{% endfor %}<div class="summary-row"><span>Subtotal</span><span>${{ '%.2f'|format(receipt.subtotal) }}</span></div><div class="summary-row"><span>Service tax</span><span>${{ '%.2f'|format(receipt.tax) }}</span></div><div class="summary-row total"><span>Total paid</span><span>${{ '%.2f'|format(receipt.total) }}</span></div><button class="print" type="button" onclick="printReceipt()">Print receipt</button><span class="print-error" id="print-error" role="alert"></span></section>{% endif %}
+</main>
+<script>
+const priceByName = { pizza: 12.99, burger: 9.99 };
+const form = document.getElementById('order-form');
+const money = value => '$' + value.toFixed(2);
+function updateSummary() {
+    let subtotal = 0, count = 0; const items = [];
+    form.querySelectorAll('input[type="number"]').forEach(input => { const quantity = Math.max(0, Math.min(99, Number(input.value) || 0)); input.value = quantity; subtotal += quantity * priceByName[input.name]; count += quantity; if (quantity) items.push(`<div class="summary-row"><span>${quantity} × ${input.name === 'pizza' ? 'Classic Pizza' : 'House Burger'}</span><span>${money(quantity * priceByName[input.name])}</span></div>`); });
+    document.getElementById('summary-items').innerHTML = items.join('') || '<div class="empty">Your order is empty. Add a bite above.</div>';
+    document.getElementById('subtotal').textContent = money(subtotal); document.getElementById('tax').textContent = money(subtotal * .08); document.getElementById('total').textContent = money(subtotal * 1.08); document.getElementById('item-count').textContent = `${count} item${count === 1 ? '' : 's'}`;
+}
+form.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => { const input = button.parentElement.querySelector('input'); input.value = Math.max(0, Math.min(99, Number(input.value) + (button.dataset.action === 'increase' ? 1 : -1))); updateSummary(); }));
+form.querySelectorAll('input[type="number"]').forEach(input => input.addEventListener('input', updateSummary)); updateSummary();
+function printReceipt() {
+    window.print();
+}
+</script>
+</body>
+</html>

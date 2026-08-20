@@ -1,0 +1,277 @@
+"""
+Depth-First Search (DFS) - Multiple Examples and Use Cases
+"""
+
+# ============================================================================
+# 1. BASIC DFS - Graph Traversal
+# ============================================================================
+
+def dfs_traversal(graph, start, visited=None):
+    """
+    Traverse a graph using DFS starting from a given node.
+    
+    Args:
+        graph: Dictionary representing adjacency list {node: [neighbors]}
+        start: Starting node
+        visited: Set to track visited nodes
+    
+    Returns:
+        List of nodes in DFS order
+    """
+    if visited is None:
+        visited = set()
+    
+    traversal_order = []
+    stack = [start]
+    
+    while stack:
+        node = stack.pop()
+        if node not in visited:
+            visited.add(node)
+            traversal_order.append(node)
+            # Add neighbors in reverse order to maintain left-to-right traversal
+            stack.extend(reversed(graph.get(node, [])))
+    
+    return traversal_order
+
+
+# ============================================================================
+# 2. RECURSIVE DFS - Path Finding
+# ============================================================================
+
+def dfs_find_path(graph, start, target, visited=None, path=None):
+    """
+    Find a path between start and target nodes using recursive DFS.
+    
+    Args:
+        graph: Adjacency list {node: [neighbors]}
+        start: Starting node
+        target: Target node to find
+        visited: Set to track visited nodes
+        path: Current path being explored
+    
+    Returns:
+        List representing path from start to target, or None if not found
+    """
+    if visited is None:
+        visited = set()
+    if path is None:
+        path = []
+    
+    visited.add(start)
+    path.append(start)
+    
+    if start == target:
+        return path[:]
+    
+    for neighbor in graph.get(start, []):
+        if neighbor not in visited:
+            result = dfs_find_path(graph, neighbor, target, visited, path)
+            if result:
+                return result
+    
+    path.pop()
+    return None
+
+
+# ============================================================================
+# 3. CYCLE DETECTION
+# ============================================================================
+
+def has_cycle(graph):
+    """
+    Detect if a directed graph has a cycle using DFS.
+    
+    Args:
+        graph: Adjacency list {node: [neighbors]}
+    
+    Returns:
+        True if cycle exists, False otherwise
+    """
+    visited = set()
+    rec_stack = set()  # Recursion stack to detect back edges
+    
+    def dfs_cycle(node):
+        visited.add(node)
+        rec_stack.add(node)
+        
+        for neighbor in graph.get(node, []):
+            if neighbor not in visited:
+                if dfs_cycle(neighbor):
+                    return True
+            elif neighbor in rec_stack:
+                # Back edge found - cycle detected
+                return True
+        
+        rec_stack.remove(node)
+        return False
+    
+    for node in graph:
+        if node not in visited:
+            if dfs_cycle(node):
+                return True
+    
+    return False
+
+
+# ============================================================================
+# 4. CONNECTED COMPONENTS
+# ============================================================================
+
+def find_connected_components(graph):
+    """
+    Find all connected components in an undirected graph.
+    
+    Args:
+        graph: Adjacency list {node: [neighbors]}
+    
+    Returns:
+        List of lists, where each inner list is a connected component
+    """
+    visited = set()
+    components = []
+    
+    def dfs_component(node, component):
+        visited.add(node)
+        component.append(node)
+        for neighbor in graph.get(node, []):
+            if neighbor not in visited:
+                dfs_component(neighbor, component)
+    
+    for node in graph:
+        if node not in visited:
+            component = []
+            dfs_component(node, component)
+            components.append(component)
+    
+    return components
+
+
+# ============================================================================
+# 5. TOPOLOGICAL SORT (DAG)
+# ============================================================================
+
+def topological_sort(graph):
+    """
+    Perform topological sort on a Directed Acyclic Graph (DAG).
+    
+    Args:
+        graph: Adjacency list {node: [neighbors]}
+    
+    Returns:
+        List of nodes in topological order
+    """
+    visited = set()
+    stack = []
+    
+    def dfs_topo(node):
+        visited.add(node)
+        for neighbor in graph.get(node, []):
+            if neighbor not in visited:
+                dfs_topo(neighbor)
+        stack.append(node)
+    
+    for node in graph:
+        if node not in visited:
+            dfs_topo(node)
+    
+    return stack[::-1]
+
+
+# ============================================================================
+# 6. MAZE SOLVING
+# ============================================================================
+
+def solve_maze(maze, start, end):
+    """
+    Solve a maze using DFS.
+    
+    Args:
+        maze: 2D list where 0 = path, 1 = wall
+        start: Tuple (row, col) for start position
+        end: Tuple (row, col) for end position
+    
+    Returns:
+        List of tuples representing the path, or None if no path exists
+    """
+    rows, cols = len(maze), len(maze[0])
+    visited = set()
+    
+    def dfs_maze(pos, path):
+        if pos == end:
+            return path + [pos]
+        
+        row, col = pos
+        if pos in visited or row < 0 or row >= rows or col < 0 or col >= cols or maze[row][col] == 1:
+            return None
+        
+        visited.add(pos)
+        
+        # Try all 4 directions: up, down, left, right
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            new_pos = (row + dr, col + dc)
+            result = dfs_maze(new_pos, path + [pos])
+            if result:
+                return result
+        
+        return None
+    
+    return dfs_maze(start, [])
+
+
+# ============================================================================
+# TESTING
+# ============================================================================
+
+if __name__ == "__main__":
+    # Test Graph
+    graph = {
+        'A': ['B', 'C'],
+        'B': ['A', 'D', 'E'],
+        'C': ['A', 'F'],
+        'D': ['B'],
+        'E': ['B', 'F'],
+        'F': ['C', 'E']
+    }
+    
+    print("=" * 60)
+    print("1. BASIC DFS TRAVERSAL")
+    print("=" * 60)
+    print(f"DFS traversal from A: {dfs_traversal(graph, 'A')}")
+    
+    print("\n" + "=" * 60)
+    print("2. FIND PATH")
+    print("=" * 60)
+    print(f"Path from A to F: {dfs_find_path(graph, 'A', 'F')}")
+    print(f"Path from A to D: {dfs_find_path(graph, 'A', 'D')}")
+    
+    print("\n" + "=" * 60)
+    print("3. CYCLE DETECTION")
+    print("=" * 60)
+    graph_dag = {'A': ['B'], 'B': ['C'], 'C': []}
+    graph_cyclic = {'A': ['B'], 'B': ['C'], 'C': ['A']}
+    print(f"DAG has cycle: {has_cycle(graph_dag)}")
+    print(f"Cyclic graph has cycle: {has_cycle(graph_cyclic)}")
+    
+    print("\n" + "=" * 60)
+    print("4. CONNECTED COMPONENTS")
+    print("=" * 60)
+    print(f"Connected components: {find_connected_components(graph)}")
+    
+    print("\n" + "=" * 60)
+    print("5. TOPOLOGICAL SORT")
+    print("=" * 60)
+    print(f"Topological order: {topological_sort(graph_dag)}")
+    
+    print("\n" + "=" * 60)
+    print("6. MAZE SOLVING")
+    print("=" * 60)
+    maze = [
+        [0, 1, 0, 0, 0],
+        [0, 1, 0, 1, 0],
+        [0, 0, 0, 1, 0],
+        [1, 1, 0, 1, 0],
+        [0, 0, 0, 0, 0]
+    ]
+    path = solve_maze(maze, (0, 0), (4, 4))
+    print(f"Maze path from (0,0) to (4,4): {path}")
