@@ -8,15 +8,15 @@ app = Flask(__name__)
 MENU = {
     "pizza": {
         "name": "Classic Pizza",
-        "description": "Stone-baked crust, tomato, mozzarella and basil.",
-        "price": 12.99,
+        "description": "Stone-baked crust, onion tomato, mozzarella and basil.",
+        "price": 50.00,
         "emoji": "🍕",
         "number": "01",
     },
     "burger": {
         "name": "House Burger",
-        "description": "Juicy beef patty, cheddar, lettuce and house sauce.",
-        "price": 9.99,
+        "description": "potato patty, cheese slice , tomato slice,  lettuce and house sauce.",
+        "price": 15.00,
         "emoji": "🍔",
         "number": "02",
     },
